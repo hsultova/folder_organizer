@@ -1,10 +1,10 @@
-# Folder organizer
+# Folder Organizer
 
-A simple Python script that organizes files in a selected folder by file type into category subfolders. Used for practice after reading the book: _"Automate the boring stuff with pyrhon", AL SWEIGART_
+A simple Python project that organizes files in a selected folder by file type. It was created as a practice project after reading _Automate the Boring Stuff with Python_ by Al Sweigart.
 
 ## What it does
 
-The script scans a target directory and moves files into folders such as:
+The script scans a target directory and moves files into category folders such as:
 
 - Images
 - Documents
@@ -30,6 +30,20 @@ You can also run the Python script directly:
 python main.py
 ```
 
+## Optional parameters
+
+The main function supports these optional arguments:
+
+```python
+organize_folder(folder, add_date=True, move_old_files=False)
+```
+
+- `add_date=True`: rename the file as appending last modified date. Example: `2026-10-06_photo.jpg`.
+- `move_old_files=False`: keeps older files in their normal category folder.
+- `move_old_files=True`: moves files older than 30 days into `Old_Files/<Category>`, so they are separated from newer files.
+
+This is useful when you want a cleaner archive and a backup-like structure for older items without deleting anything.
+
 ## Example
 
 If a folder contains:
@@ -39,10 +53,10 @@ If a folder contains:
 - `video.mp4`
 - `archive.zip`
 
-The script will place them into matching category folders such as `Images`, `Documents`, `Videos`, and `Archives`.
+The script moves them into matching folders such as `Images`, `Documents`, `Videos`, and `Archives`.
 
 ## Notes
 
-- The script creates category folders automatically when needed.
-- Files that do not match a known category are moved to the `Others` folder.
-- This project is intended for quick file organization and cleanup.
+- Category folders are created automatically when needed.
+- Files that do not match a known extension are moved to `Others`.
+- This is a small utility for quick file organization and cleanup.
