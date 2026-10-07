@@ -11,7 +11,7 @@ from utils import next_available_path
 DATE_IN_NAME_PATTERN = re.compile(r"\d{2,4}[-._]\d{2}[-._]\d{2,4}")
 OLD_FILE_AGE_DAYS = 30  # Number of days to consider a file as old
 
-def organize_folder(folder: str, add_date: bool = True, move_old_files: bool = False, undo: bool = False) -> list[str]:
+def organize_folder(folder: str, add_date: bool = True, move_old_files: bool = False, undo: bool = False) -> None:
     """
     Organize files in the specified folder based on their extensions. 
     Optionally, add the date to the filename and move old files to a separate folder.
@@ -75,7 +75,6 @@ def move_file(run_id: str, file: Path, destination_folder: Path, add_date: bool)
     print(f"File '{file.name}' moved to '{destination}'")
 
 def is_file_old(file: Path) -> bool:
-    f"""Check if a file is older than the specified number of days - {OLD_FILE_AGE_DAYS}.
-    """
+    """Check if a file is older than OLD_FILE_AGE_DAYS based on its last modified time."""
     cutoff_date = datetime.now().timestamp() - (OLD_FILE_AGE_DAYS * 86400)  # OLD_FILE_AGE_DAYS days in seconds
     return file.stat().st_mtime < cutoff_date
