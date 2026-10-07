@@ -1,5 +1,5 @@
 # Define the file types and their corresponding extensions
-FILE_TYPES = {
+CATEGORY_EXTENSIONS = {
     'Images': ['.jpg', '.jpeg', '.png', '.gif', '.bmp'],
     'Documents': ['.pdf', '.docx', '.txt', '.xlsx', '.pptx'],
     'Audio': ['.mp3', '.wav', '.aac'],
@@ -10,7 +10,7 @@ FILE_TYPES = {
 
 def category_for(extension: str) -> str:
     """Return the category folder name for a file extension."""
-    for category, extensions in FILE_TYPES.items():
+    for category, extensions in CATEGORY_EXTENSIONS.items():
         if extension in extensions:
             return category
     return "Others"

@@ -5,12 +5,13 @@ from datetime import datetime
 from pathlib import Path
 
 from categories import category_for
-from history import log_move, undo_last_operations
-from utils import unique_path
+from history import log_move, undo_last_run
+from utils import next_available_path
 
-OLD_FILES_DAYS = 30  # Number of days to consider a file as old
+DATE_IN_NAME_PATTERN = re.compile(r"\d{2,4}[-._]\d{2}[-._]\d{2,4}")
+OLD_FILE_AGE_DAYS = 30  # Number of days to consider a file as old
 
-def organize_folder(folder: str, add_date: bool = True, move_old_files: bool = False, undo: bool = False) -> None:
+def organize_folder(folder: str, add_date: bool = True, move_old_files: bool = False, undo: bool = False) -> list[str]:
     """
     Organize files in the specified folder based on their extensions. 
     Optionally, add the date to the filename and move old files to a separate folder.
@@ -26,7 +27,7 @@ def organize_folder(folder: str, add_date: bool = True, move_old_files: bool = F
 
     run_id = datetime.now().strftime("%Y%m%d-%H%M%S") 
     if undo:
-        undo_last_operations()
+        undo_last_run()
         return
 
     for file in folder_path.iterdir():
@@ -45,35 +46,36 @@ def organize_folder(folder: str, add_date: bool = True, move_old_files: bool = F
         except OSError as err:
             print(f"Could not move {file.name}: {err}")
 
-def move_file(run_id: str, file: Path, folder_to_move: Path, add_date: bool) -> None:
-    """Move a file to the specified folder. If the folder does not exist, create it.
+def dated_name(file: Path) -> str:
+    """Return the file's name prefixed with its last modified date.
+    Names that already contain a date are returned unchanged.
+    """
+    if DATE_IN_NAME_PATTERN.search(file.name):
+        print(f"File '{file.name}' already has a date in its name. Skipping date addition.")
+        return file.name
+
+    date = datetime.fromtimestamp(file.stat().st_mtime).date()
+    new_name = f"{date}_{file.name}"
+    print(f"Renamed '{file.name}' to '{new_name}'")
+    return new_name
+
+def move_file(run_id: str, file: Path, destination_folder: Path, add_date: bool) -> None:
+    """Move a file into the specified folder, creating the folder if it does not exist.
     Optionally, add the date to the filename.
-    """  
-    folder_to_move.mkdir(parents=True, exist_ok=True)
-    file_name = file.name    
-    file_to_move = folder_to_move / file_name
-    if add_date:
-        regex = r'\d{2,4}[-._]\d{2}[-._]\d{2,4}'
-        if re.search(regex, file_name):
-            print(f"File '{file_name}' already has a date in its name. Skipping date addition.")
-        else:
-            date = datetime.fromtimestamp(file.stat().st_mtime).date()
-            print(f"Renamed '{file_name}' to '{f'{date}_{file.name}'}'")
-            file_name = f"{date}_{file.name}"
-            file_to_move = folder_to_move / file_name
+    """
+    destination_folder.mkdir(parents=True, exist_ok=True)
 
-    unique_file_to_move = unique_path(file_to_move)
-    if unique_file_to_move != file_to_move:
-        print(f"File '{file_name}' already exists. Renamed to '{unique_file_to_move.name}'")
-        file_name = unique_file_to_move.name
-        file_to_move = unique_file_to_move
+    file_name = dated_name(file) if add_date else file.name
+    destination = next_available_path(destination_folder / file_name)
+    if destination.name != file_name:
+        print(f"File '{file_name}' already exists. Renamed to '{destination.name}'")
 
-    shutil.move(file, file_to_move)
-    print(f"Moved '{file_name}' to '{folder_to_move}'\n")
-    log_move(run_id, file, file_to_move)
+    shutil.move(file, destination)
+    log_move(run_id, file, destination)
+    print(f"File '{file.name}' moved to '{destination}'")
 
 def is_file_old(file: Path) -> bool:
-    """Check if a file is older than 30 days based on its last modified time.
+    f"""Check if a file is older than the specified number of days - {OLD_FILE_AGE_DAYS}.
     """
-    cutoff_date = datetime.now().timestamp() - (OLD_FILES_DAYS * 86400)  # OLD_FILES_DAYS days in seconds
+    cutoff_date = datetime.now().timestamp() - (OLD_FILE_AGE_DAYS * 86400)  # OLD_FILE_AGE_DAYS days in seconds
     return file.stat().st_mtime < cutoff_date

@@ -1,6 +1,6 @@
 from pathlib import Path
 
-def unique_path(target: Path) -> Path:
+def next_available_path(target: Path) -> Path:
     """
     Generate a unique file path by appending a counter to the filename if the target path already exists.
     """

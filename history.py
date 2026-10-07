@@ -3,12 +3,13 @@ from pathlib import Path
 import shutil
 
 from datetime import datetime
-from utils import unique_path
+from utils import next_available_path
 
 LOG_FILE = Path(__file__).parent / "file_log.csv"
 LOG_COLUMNS = ["run_id", "timestamp", "source", "destination"]
 
 def log_move(run_id: str,  source: Path, destination: Path) -> None:
+    """Log the file move operation to a CSV file."""
     is_new = not LOG_FILE.exists()
     with open(LOG_FILE, 'a', newline='', encoding='utf-8') as log_file:
         log_writer = csv.writer(log_file, delimiter=',', lineterminator='\n')
@@ -17,8 +18,8 @@ def log_move(run_id: str,  source: Path, destination: Path) -> None:
         log_writer.writerow([run_id, datetime.now().isoformat(timespec="seconds"), str(source), str(destination)])
 
 def read_log() -> list[dict[str, str]]:
-    """Read and print the contents of the log file."""
-    if not Path(LOG_FILE).exists():
+    """Read the log file and return its contents as a list of dictionaries."""
+    if not LOG_FILE.exists():
         print("Log file does not exist.")
         return []
 
@@ -28,12 +29,13 @@ def read_log() -> list[dict[str, str]]:
         return log_contents
 
 def write_log(rows: list[dict[str, str]]) -> None:
+    """Write the given rows to the log file, overwriting its contents."""
     with open(LOG_FILE, "w", newline="", encoding="utf-8") as log_file:
         writer = csv.DictWriter(log_file, fieldnames=LOG_COLUMNS)
         writer.writeheader()
         writer.writerows(rows)
 
-def undo_last_operations() -> None:
+def undo_last_run() -> None:
     """Undo the last file organization operation by moving files back to their original locations based on the log."""
 
     rows = read_log()
@@ -60,7 +62,7 @@ def undo_last_operations() -> None:
             failed.append(row)
             continue
  
-        target = unique_path(source)  # don't overwrite a file that appeared since
+        target = next_available_path(source)  # don't overwrite a file that appeared since
  
         try:
             shutil.move(destination, target)
