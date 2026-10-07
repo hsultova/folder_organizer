@@ -1,5 +1,6 @@
 import shutil
 import os
+import csv
 
 from datetime import datetime
 from pathlib import Path
@@ -15,6 +16,8 @@ file_types = {
     'Others': []
 }
 
+LOG_FILE = "file_log.csv"
+
 def organize_folder(folder: str, add_date: bool = True, move_old_files: bool = False) -> None:
     """
     Organize files in the specified folder based on their extensions. 
@@ -27,6 +30,8 @@ def organize_folder(folder: str, add_date: bool = True, move_old_files: bool = F
     if not folder_path.exists():    
         print(f"The folder '{folder}' does not exist.")
         return
+
+    run_id = datetime.now().strftime("%Y%m%d-%H%M%S")
 
     for file in folder_path.iterdir():
         if file.is_file():
@@ -45,11 +50,14 @@ def organize_folder(folder: str, add_date: bool = True, move_old_files: bool = F
             if not is_moved:
                 others_path = folder_path / 'Others'
                 move_file(file, others_path, add_date)
+                log_move(run_id, file, others_path)
 
 def move_file(file: Path, folder_to_move: Path, add_date: bool = True) -> None:
     """Move a file to the specified folder. If the folder does not exist, create it.
     Optionally, add the date to the filename.
     """
+    run_id = datetime.now().strftime("%Y%m%d-%H%M%S")
+    
     if not folder_to_move.exists():
         os.makedirs(folder_to_move)
     file_name = file.name    
@@ -68,6 +76,7 @@ def move_file(file: Path, folder_to_move: Path, add_date: bool = True) -> None:
 
     shutil.move(file, file_to_move)
     print(f"Moved '{file_name}' to '{folder_to_move}'\n")
+    log_move(run_id, file, file_to_move)
 
 def is_file_old(file: Path) -> bool:
     """Check if a file is older than 30 days based on its last modified time.
@@ -88,3 +97,19 @@ def unique_path(target: Path) -> Path:
         if not candidate.exists():
             return candidate
         counter += 1
+
+def log_move(run_id: str,  source: Path, destination: Path) -> None:
+    with open(LOG_FILE, 'a', newline='') as log_file:
+        log_writer = csv.writer(log_file, delimiter=',', lineterminator='\n')
+        log_writer.writerow([run_id, datetime.now().isoformat(timespec="seconds"), str(source), str(destination)])
+
+def read_log() -> list[dict[str, str]]:
+    """Read and print the contents of the log file."""
+    if not Path(LOG_FILE).exists():
+        print("Log file does not exist.")
+        return
+
+    with open(LOG_FILE, 'r', newline='') as log_file:
+        log_reader = csv.DictReader(log_file)
+        log_contents = list(log_reader)
+        return log_contents
