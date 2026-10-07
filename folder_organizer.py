@@ -15,6 +15,7 @@ def organize_folder(folder: str, add_date: bool = True, move_old_files: bool = F
     """
     Organize files in the specified folder based on their extensions. 
     Optionally, add the date to the filename and move old files to a separate folder.
+    Undo the last organization operation if specified.
     :param folder: The path to the folder to organize.
     :param add_date: Whether to add the date to the filename (default is True).
     :param move_old_files: Whether to move old files to a separate folder (default is False).

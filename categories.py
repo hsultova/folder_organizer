@@ -1,4 +1,4 @@
-# Define the file types and their corresponding extensions
+# Define the categories and their associated file extensions
 CATEGORY_EXTENSIONS = {
     'Images': ['.jpg', '.jpeg', '.png', '.gif', '.bmp'],
     'Documents': ['.pdf', '.docx', '.txt', '.xlsx', '.pptx'],
