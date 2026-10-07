@@ -34,45 +34,38 @@ def organize_folder(folder: str, add_date: bool = True, move_old_files: bool = F
         print(f"The folder '{folder}' does not exist.")
         return
 
+    run_id = datetime.now().strftime("%Y%m%d-%H%M%S") 
     if undo:
         undo_last_operations()
         return
 
     for file in folder_path.iterdir():
-        if file.is_file():
-            file_extension = file.suffix.lower()
-            is_moved = False
+        if not file.is_file():
+            continue
 
-            for category, extensions in FILE_TYPES.items():
-                if file_extension in extensions:
-                    category_path = folder_path / category
-                    if move_old_files and is_file_old(file):
-                        category_path = folder_path / 'Old_Files' / category
-                        
-                    try:
-                        move_file(file, category_path, add_date)
-                        is_moved = True
-                    except OSError as err:
-                        print(f"Could not move {file.name}: {err}")
-                        continue
-                    break
+        category = category_for(file.suffix.lower())
 
-            if not is_moved:
-                others_path = folder_path / 'Others'
-                if move_old_files and is_file_old(file):
-                    others_path = folder_path / 'Old_Files' / 'Others'
-                try:
-                    move_file(file, others_path, add_date)
-                except OSError as err:
-                    print(f"Could not move {file.name}: {err}")
-                    continue
+        if move_old_files and is_file_old(file):
+            target_folder = folder_path / "Old_Files" / category
+        else:
+            target_folder = folder_path / category
 
-def move_file(file: Path, folder_to_move: Path, add_date: bool) -> None:
+        try:
+            move_file(run_id, file, target_folder, add_date)
+        except OSError as err:
+            print(f"Could not move {file.name}: {err}")
+
+def category_for(extension: str) -> str:
+    """Return the category folder name for a file extension."""
+    for category, extensions in FILE_TYPES.items():
+        if extension in extensions:
+            return category
+    return "Others"
+
+def move_file(run_id: str, file: Path, folder_to_move: Path, add_date: bool) -> None:
     """Move a file to the specified folder. If the folder does not exist, create it.
     Optionally, add the date to the filename.
-    """
-    run_id = datetime.now().strftime("%Y%m%d-%H%M%S")    
-
+    """  
     folder_to_move.mkdir(parents=True, exist_ok=True)
     file_name = file.name    
     file_to_move = folder_to_move / file_name
@@ -82,10 +75,9 @@ def move_file(file: Path, folder_to_move: Path, add_date: bool) -> None:
             print(f"File '{file_name}' already has a date in its name. Skipping date addition.")
         else:
             date = datetime.fromtimestamp(file.stat().st_mtime).date()
+            print(f"Renamed '{file_name}' to '{f'{date}_{file.name}'}'")
             file_name = f"{date}_{file.name}"
             file_to_move = folder_to_move / file_name
-            print(f"Renamed '{file_name}' to '{f'{date}_{file.name}'}'")
-
 
     unique_file_to_move = unique_path(file_to_move)
     if unique_file_to_move != file_to_move:
